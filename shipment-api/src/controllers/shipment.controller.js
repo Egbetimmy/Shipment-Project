@@ -5,6 +5,31 @@ const {
     updateShipmentService, 
     deleteShipmentService 
 } = require('../services/shipment.service');
+const Pricing = require("../models/pricing.model");
+
+const getShipmentCost = async (req, res) => {
+    try {
+        const { weight, packageType, distance, deliverySpeed, insurance } = req.query;
+
+        if (!weight || !packageType || !distance || !deliverySpeed) {
+            return res.status(400).json({ message: "Missing required parameters" });
+        }
+
+        const parsedWeight = parseFloat(weight);
+        const parsedDistance = parseFloat(distance);
+        const parsedInsurance = insurance === "true"; 
+
+        if (isNaN(parsedWeight) || isNaN(parsedDistance) || parsedWeight <= 0 || parsedDistance <= 0) {
+            return res.status(400).json({ message: "Invalid weight or distance values" });
+        }
+
+        const estimatedCost = Pricing.calculateShipmentCost(parsedWeight, packageType, parsedDistance, deliverySpeed, parsedInsurance);
+
+        res.status(200).json({ estimatedCost });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 const getShipmentByTrackingNumber = async (req, res) => {
     try {
@@ -76,5 +101,6 @@ module.exports = {
     createShipment,
     getShipmentByTrackingNumber,
     updateShipment,
-    deleteShipment
+    deleteShipment,
+    getShipmentCost
 };
